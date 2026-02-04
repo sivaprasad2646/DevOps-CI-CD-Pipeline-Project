@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: backend:1
+          image: 772876499232.dkr.ecr.ap-south-1.amazonaws.com/devops-ci-cd-pipeline-peoject/backend:latest
           ports:
             - containerPort: 3000
           imagePullPolicy: IfNotPresent

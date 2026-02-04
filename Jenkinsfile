@@ -3,7 +3,7 @@ pipeline {
 
   environment {
     AWS_REGION = 'ap-south-1'
-    ECR_REGISTRY_URL = credentials('ECR_REGISTRY_URL')
+    ECR_REGISTRY_URL = '772876499232.dkr.ecr.ap-south-1.amazonaws.com/devops-ci-cd-pipeline-peoject'
     IMAGE_TAG = "${BUILD_NUMBER}-${GIT_COMMIT.take(7)}"
   }
 
