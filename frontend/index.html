@@ -1,10 +1,109 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Frontend App</title>
+  <meta charset="UTF-8" />
+  <title>DevOps CI/CD Pipeline Project</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      background: rgba(0, 0, 0, 0.6);
+      padding: 40px;
+      border-radius: 12px;
+      max-width: 700px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    h1 {
+      margin-bottom: 10px;
+      font-size: 2.2rem;
+      color: #00e5ff;
+    }
+
+    h2 {
+      margin-top: 0;
+      font-weight: normal;
+      color: #b2ebf2;
+    }
+
+    p {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin: 12px 0;
+    }
+
+    .badges {
+      margin: 25px 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .badge {
+      background: #1e88e5;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+
+    .badge.aws { background: #ff9800; }
+    .badge.jenkins { background: #d32f2f; }
+    .badge.k8s { background: #326ce5; }
+    .badge.terraform { background: #7b42bc; }
+    .badge.docker { background: #0db7ed; }
+
+    .footer {
+      margin-top: 20px;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    .api {
+      margin-top: 15px;
+      font-size: 0.95rem;
+      color: #a5d6a7;
+    }
+  </style>
 </head>
 <body>
-  <h1>Frontend Running on EKS 🚀</h1>
-  <p>Backend API: /api</p>
+  <div class="container">
+    <h1>Frontend Running on EKS 🚀</h1>
+    <h2>DevOps End-to-End CI/CD Pipeline Project</h2>
+
+    <p>
+      This web application is deployed on <strong>AWS EKS</strong> using a fully automated
+      CI/CD pipeline built with modern DevOps tools.
+    </p>
+
+    <div class="badges">
+      <div class="badge jenkins">Jenkins</div>
+      <div class="badge aws">AWS</div>
+      <div class="badge terraform">Terraform</div>
+      <div class="badge k8s">Kubernetes</div>
+      <div class="badge docker">Docker</div>
+    </div>
+
+    <p class="api">
+      🔗 Backend API Endpoint: <strong>/api</strong>
+    </p>
+
+    <div class="footer">
+      🚀 Built as part of a Production-Grade DevOps CI/CD Pipeline Demo
+    </div>
+  </div>
 </body>
 </html>
