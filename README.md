@@ -105,21 +105,62 @@ Verify cluster access:
 kubectl get nodes
 ```
 
+### EKS Access & RBAC Setup
+
+This cluster uses **CONFIG_MAP** authentication mode. RBAC access is managed via the `aws-auth` ConfigMap.
+
+Add the Jenkins EC2 IAM Role to `aws-auth`:
+```bash
+kubectl edit configmap aws-auth -n kube-system
+```
+
+Add:
+```yaml
+- rolearn: arn:aws:iam::<ACCOUNT_ID>:role/Jenkins-EC2-Role
+  username: jenkins
+  groups:
+    - system:masters
+```
+
+Note: `aws eks create-access-entry` will fail for clusters using CONFIG_MAP mode.
+
 ### 4. Install ALB Ingress Controller (required for Ingress)
 
 ```bash
-# Add AWS ELB controller Helm chart repo
+# 1) Associate OIDC provider (IRSA prerequisite)
+eksctl utils associate-iam-oidc-provider \
+  --region ap-south-1 \
+  --cluster devops-eks-cluster \
+  --approve
+
+# 2) Create IAM policy for the AWS Load Balancer Controller
+curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/install/iam_policy.json
+aws iam create-policy \
+  --policy-name AWSLoadBalancerControllerIAMPolicy \
+  --policy-document file://iam_policy.json
+
+# 3) Create IAM ServiceAccount (IRSA)
+eksctl create iamserviceaccount \
+  --cluster devops-eks-cluster \
+  --namespace kube-system \
+  --name aws-load-balancer-controller \
+  --attach-policy-arn arn:aws:iam::<ACCOUNT_ID>:policy/AWSLoadBalancerControllerIAMPolicy \
+  --override-existing-serviceaccounts \
+  --approve
+
+# 4) Install controller via Helm using the IRSA ServiceAccount
 helm repo add eks https://aws.github.io/eks-charts
 helm repo update
-
-# Install ALB ingress controller
 helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
   -n kube-system \
-  --set clusterName=devops-eks-cluster
+  --set clusterName=devops-eks-cluster \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=aws-load-balancer-controller
 ```
 
 Verify installation:
 ```bash
+kubectl get sa -n kube-system aws-load-balancer-controller
 kubectl get deployment -n kube-system aws-load-balancer-controller
 ```
 
@@ -162,9 +203,7 @@ In Jenkins UI (Admin → Manage Jenkins → Manage Credentials):
 1. **ECR_REGISTRY_URL** (Secret text)
    - Value: `<YOUR_AWS_ACCOUNT_ID>.dkr.ecr.ap-south-1.amazonaws.com`
 
-2. **aws-credentials** (AWS Credentials)
-   - AWS Access Key ID: `<YOUR_ACCESS_KEY>`
-   - AWS Secret Access Key: `<YOUR_SECRET_KEY>`
+2. **aws-credentials** (IAM Role via EC2 Instance Profile). Use an attached IAM Role on the Jenkins EC2 instance instead of static keys. Do not store `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` in Jenkins. Required IAM policies for Jenkins EC2 Role: AmazonEKSClusterPolicy, AmazonEKSWorkerNodePolicy, AmazonEC2ContainerRegistryFullAccess, AmazonS3FullAccess (only if using S3 artifacts).
 
 #### Create Pipeline Job:
 
@@ -287,6 +326,25 @@ aws eks describe-cluster --name devops-eks-cluster --region ap-south-1
 aws eks update-kubeconfig --name devops-eks-cluster --region ap-south-1
 ```
 
+### Ingress ADDRESS is empty
+Check controller pods:
+```bash
+kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
+```
+
+Verify ServiceAccount exists:
+```bash
+kubectl get sa -n kube-system aws-load-balancer-controller
+```
+
+Verify OIDC provider is associated (IRSA):
+```bash
+eksctl utils describe-iam-oidc-provider --cluster devops-eks-cluster --region ap-south-1
+```
+
+Verify subnets are tagged for ELB:
+`kubernetes.io/role/elb=1` (public) and `kubernetes.io/role/internal-elb=1` (private).
+
 ### Pods in Pending state
 ```bash
 # Check node capacity
@@ -305,6 +363,13 @@ aws ecr list-images --repository-name backend --region ap-south-1
 # Check kubeconfig can access ECR
 aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin <AWS_ACCOUNT_ID>.dkr.ecr.ap-south-1.amazonaws.com
 ```
+
+## Common Errors & Fixes
+
+- `kubectl error: You must be logged in to the server` â†’ Fix via `aws-auth` ConfigMap mapping.
+- `aws eks update-kubeconfig` works but `kubectl` is denied â†’ RBAC issue (missing role mapping).
+- `aws-load-balancer-controller` READY 0/2 â†’ IRSA or ServiceAccount missing.
+- Ingress ADDRESS empty â†’ Controller not running or ingress.class misconfigured.
 
 ## Best Practices Implemented
 
@@ -329,6 +394,11 @@ aws ecr get-login-password --region ap-south-1 | docker login --username AWS --p
 - Recommended: Use private registries and image scanning
 - Recommended: Enable EKS audit logging
 - Recommended: Use Kubernetes network policies
+
+## Security Best Practices
+
+- Avoid committing AWS credentials to Git.
+- Prefer IAM Roles for EC2 and IRSA for Kubernetes controllers.
 
 ## Cost Optimization
 
