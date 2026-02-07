@@ -1,6 +1,11 @@
 pipeline {
   agent any
 
+  // Build automatically on GitHub push webhook
+  triggers {
+    githubPush()
+  }
+
   environment {
     AWS_REGION = 'ap-south-1'
     ECR_REGISTRY_URL = '772876499232.dkr.ecr.ap-south-1.amazonaws.com/devops-ci-cd-pipeline-peoject'
