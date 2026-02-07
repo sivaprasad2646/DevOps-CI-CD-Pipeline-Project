@@ -70,12 +70,14 @@ pipeline {
       steps {
         script {
           echo "Applying Kubernetes manifests to EKS cluster..."
-          sh '''
-          aws eks update-kubeconfig --name devops-eks-cluster --region ${AWS_REGION}
-          kubectl apply -f k8s/
-          kubectl rollout status deployment/backend-deployment -n default --timeout=5m
-          kubectl rollout status deployment/frontend-deployment -n default --timeout=5m
-          '''
+          withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+            sh '''
+            aws eks update-kubeconfig --name devops-eks-cluster --region ${AWS_REGION}
+            kubectl apply -f k8s/
+            kubectl rollout status deployment/backend-deployment -n default --timeout=5m
+            kubectl rollout status deployment/frontend-deployment -n default --timeout=5m
+            '''
+          }
         }
       }
     }
