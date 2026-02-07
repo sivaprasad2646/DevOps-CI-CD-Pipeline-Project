@@ -88,12 +88,17 @@ pipeline {
       steps {
         script {
           echo "Verifying deployment status..."
-          sh '''
-          kubectl get deployments
-          kubectl get services
-          kubectl get ingress
-          kubectl get pods
-          '''
+          withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+            sh '''
+            export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+            export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+            aws eks update-kubeconfig --name devops-eks-cluster --region ${AWS_REGION}
+            kubectl get deployments
+            kubectl get services
+            kubectl get ingress
+            kubectl get pods
+            '''
+          }
         }
       }
     }
