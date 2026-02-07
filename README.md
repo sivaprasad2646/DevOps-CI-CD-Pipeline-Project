@@ -176,6 +176,7 @@ In Jenkins UI (Admin → Manage Jenkins → Manage Credentials):
    - Branch: `*/main`
 5. Script Path: `Jenkinsfile`
 6. Save and Build
+7.
 
 ### 7. Deploy Applications to EKS
 
