@@ -70,8 +70,10 @@ pipeline {
       steps {
         script {
           echo "Applying Kubernetes manifests to EKS cluster..."
-          withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+          withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
             sh '''
+            export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+            export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
             aws eks update-kubeconfig --name devops-eks-cluster --region ${AWS_REGION}
             kubectl apply -f k8s/
             kubectl rollout status deployment/backend-deployment -n default --timeout=5m
